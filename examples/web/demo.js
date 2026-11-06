@@ -28,6 +28,35 @@ const draftTimeline = document.querySelector('#draft-timeline')
 const DRAFT_ANIMATION_KEY = '__draft-timeline'
 const DRAG_DATA_TYPE = 'application/x-open-mascot-item'
 
+// LLM PRESETS
+const LLM_PRESETS = {
+  bolt: { label: 'Bolt - Robot', desc: 'Robot LLM helper', shape: 'robot', color: '#8AA8FF', eyeColor: '#1E3A8A', stageColor: '#0F172A', name: 'Bolt' },
+  nyan: { label: 'Nyan - Cat', desc: 'Cat LLM mascot', shape: 'cat', color: '#FFB6D9', eyeColor: '#111827', stageColor: '#1F1D2B', name: 'Nyan' },
+  ghosty: { label: 'Ghosty', desc: 'Ghost LLM', shape: 'ghost', color: '#E0E7FF', eyeColor: '#111827', stageColor: '#111827', name: 'Ghosty' },
+  clippy: { label: 'Clippy 2.0', desc: 'Paper assistant', shape: 'paper', color: '#FEF08A', eyeColor: '#111827', stageColor: '#422006', name: 'Clippy' },
+  voidling: { label: 'Voidling', desc: 'Dark mode LLM', shape: 'tall', color: '#111827', eyeColor: '#F472B6', stageColor: '#000000', name: 'Voidling' },
+  mallow: { label: 'Mallow', desc: 'Original blob', shape: 'soft', color: '#e98263', eyeColor: '#3a1e17', stageColor: '#111820', name: 'Mallow' },
+}
+
+// ANIMAL PRESETS - Grumpy Guardians + Cute Evil + Monster
+const ANIMAL_PRESETS = {
+  // GRUMPY ANIMAL GUARDIANS
+  bear: { label: 'Grumpy Bear', desc: 'Guardian · crossed arms vibe', shape: 'large', color: '#6B4A2F', eyeColor: '#111111', stageColor: '#1A1210', name: 'Bear', eyeHeight: 38 },
+  fox: { label: 'Grumpy Fox', desc: 'Guardian · sly', shape: 'tall', color: '#FF7F3F', eyeColor: '#111111', stageColor: '#1F140F', name: 'Fox', eyeHeight: 38 },
+  gorilla: { label: 'Grumpy Gorilla', desc: 'Guardian · big', shape: 'large', color: '#4A4A4A', eyeColor: '#FACC15', stageColor: '#0F0F0F', name: 'Gorilla', eyeHeight: 36 },
+  bull: { label: 'Grumpy Bull', desc: 'Guardian · horns', shape: 'wide', color: '#7C2D12', eyeColor: '#111111', stageColor: '#1A0F0A', name: 'Bull', eyeHeight: 38 },
+  pig: { label: 'Grumpy Pig', desc: 'Guardian · snout', shape: 'round', color: '#E8A0A0', eyeColor: '#111111', stageColor: '#201515', name: 'Pig', eyeHeight: 38 },
+  skunk: { label: 'Grumpy Skunk', desc: 'Guardian · stripes', shape: 'compact', color: '#181818', eyeColor: '#FFFFFF', stageColor: '#111111', name: 'Skunk', eyeHeight: 38 },
+  cheetah: { label: 'Grumpy Cheetah', desc: 'Guardian · spots', shape: 'tall', color: '#E8A020', eyeColor: '#111111', stageColor: '#1A1405', name: 'Cheetah', eyeHeight: 36 },
+  donkey: { label: 'Grumpy Donkey', desc: 'Guardian · long ears', shape: 'tall', color: '#8A8A8A', eyeColor: '#111111', stageColor: '#141414', name: 'Donkey', eyeHeight: 38 },
+  // CUTE EVIL PETS
+  evilCat: { label: 'Evil Cat', desc: 'Cute evil · villain grin', shape: 'cat', color: '#FF9A3C', eyeColor: '#7C2D12', stageColor: '#1F0F05', name: 'Evil Cat', eyeHeight: 28 },
+  evilDog: { label: 'Evil Dog', desc: 'Cute evil · Rottweiler', shape: 'round', color: '#2B2B2B', eyeColor: '#FACC15', stageColor: '#0F0F0F', name: 'Evil Dog', eyeHeight: 28 },
+  evilHamster: { label: 'Evil Hamster', desc: 'Cute evil · round', shape: 'round', color: '#D9A066', eyeColor: '#111111', stageColor: '#1A120A', name: 'Evil Hamster', eyeHeight: 30 },
+  // GRUMPY MONSTER
+  monster: { label: 'Grumpy Monster', desc: 'Green · fangs · angry brows', shape: 'wide', color: '#4CAF50', eyeColor: '#111111', stageColor: '#0F1A0F', name: 'Monster', eyeHeight: 44 },
+}
+
 const escapeHtml = value => String(value)
   .replaceAll('&', '&amp;')
   .replaceAll('<', '&lt;')
@@ -305,8 +334,63 @@ const renderDesign = () => {
       <span>${shape === 'soft' ? 'Default proportions' : shape === 'drop' ? 'Drop profile' : 'Same body rig'}</span>
     </button>`).join('')
 
+  const llmCards = Object.entries(LLM_PRESETS).map(([key, preset]) => `
+    <button type="button" data-action="select-llm-style" data-key="${key}" aria-pressed="${definition.name === preset.name && definition.blob.shape === preset.shape}">
+      <strong>${escapeHtml(preset.label)}</strong>
+      <span>${escapeHtml(preset.desc)}</span>
+    </button>`).join('')
+
+  const animalCards = Object.entries(ANIMAL_PRESETS).map(([key, preset]) => `
+    <button type="button" data-action="select-animal-style" data-key="${key}" aria-pressed="${definition.name === preset.name}">
+      <strong>${escapeHtml(preset.label)}</strong>
+      <span>${escapeHtml(preset.desc)}</span>
+    </button>`).join('')
+
+  const groqKeyVal = localStorage.getItem('groq-api-key') || ''
+  const ollamaUrlVal = localStorage.getItem('ollama-url') || 'http://localhost:11434'
+  const ollamaModelVal = localStorage.getItem('ollama-model') || 'llama3.2'
+  const aiProviderVal = localStorage.getItem('ai-provider') || 'groq'
+
   return `
     ${panelHeading('Shape the character', 'Tune one stable vector mascot. Every expression and animation inherits these choices.')}
+    <section class="render-mode-block">
+      <div class="section-title"><h3>LLM Mascot Styles</h3><span>One-click · all UI</span></div>
+      <div class="shape-grid" role="group" aria-label="LLM mascot styles">${llmCards}</div>
+    </section>
+    <section class="render-mode-block">
+      <div class="section-title"><h3>AI Mascot Generator</h3><span>Groq / Ollama - baked in</span></div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <select id="ai-provider" class="select-input" style="min-width:130px;">
+            <option value="groq" ${aiProviderVal === 'groq' ? 'selected' : ''}>Groq (fast)</option>
+            <option value="ollama" ${aiProviderVal === 'ollama' ? 'selected' : ''}>Ollama (local)</option>
+          </select>
+          <input id="ai-prompt" class="text-input" placeholder="e.g. grumpy robot that reviews PRs, neon dark mode" style="flex:1; min-width:200px;" />
+          <button class="primary-button" type="button" data-action="ai-generate">✨ Generate</button>
+        </div>
+        <details class="subsection" style="margin:0;">
+          <summary>⚙️ Settings - API Keys (stored locally only)</summary>
+          <div style="display:flex; flex-direction:column; gap:8px; padding-top:10px;">
+            <label class="field"><span>Groq API Key - free at console.groq.com (gsk_...)</span><input id="groq-key" type="password" class="text-input" placeholder="gsk_..." value="${escapeHtml(groqKeyVal)}" /></label>
+            <div style="display:flex; gap:8px;">
+              <label class="field" style="flex:1;"><span>Ollama URL</span><input id="ollama-url" class="text-input" value="${escapeHtml(ollamaUrlVal)}" /></label>
+              <label class="field" style="flex:1;"><span>Ollama Model</span><input id="ollama-model" class="text-input" value="${escapeHtml(ollamaModelVal)}" /></label>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="secondary-button" type="button" data-action="save-ai-settings">Save settings locally</button>
+              <button class="secondary-button" type="button" data-action="test-ollama">Test Ollama</button>
+            </div>
+            <small style="opacity:0.6; line-height:1.4;">Keys saved ONLY in localStorage, never sent except to Groq or localhost. For Ollama: 1) install ollama.com 2) <code>ollama serve</code> 3) <code>ollama pull llama3.2</code> 4) if CORS, <code>OLLAMA_ORIGINS=* ollama serve</code></small>
+          </div>
+        </details>
+        <div id="ai-status" style="font-size:12px; opacity:0.7; min-height:16px;"></div>
+      </div>
+    </section>
+    <section class="render-mode-block">
+      <div class="section-title"><h3>Animal Guardians & Monsters</h3><span>Grumpy + Cute Evil + Monster</span></div>
+      <div class="shape-grid" role="group" aria-label="Animal guardians">${animalCards}</div>
+      <p style="font-size:12px; opacity:0.65; margin-top:8px;">Tip: Try "Grumpy Bear" then go to Expressions → Angry for crossed-arms grumpy vibe. Evil pets use narrowed eyes (lower Eye Height). Monster uses wide shape + green for fangs/brows look.</p>
+    </section>
     <section class="render-mode-block">
       <div class="section-title"><h3>Renderer</h3><span>Compare live</span></div>
       <div class="mode-switch" role="group" aria-label="Mascot renderer">
@@ -373,7 +457,6 @@ const poseRange = (label, path, min, max, step = 1) => rangeField({
 
 const renderExpressions = () => {
   const expression = definition.expressions[selectedExpression]
-
   return `
     ${panelHeading('Direct the expression', 'Pose each eye independently, then add restrained body language. Asymmetry keeps the face feeling alive.')}
     ${renderLibrary('expression', definition.expressions, selectedExpression)}
@@ -481,7 +564,6 @@ const renderStep = (step, index, stepCount) => `
 
 const renderMotions = () => {
   const animation = definition.animations[selectedAnimation]
-
   return `
     ${panelHeading('Compose the motion', 'Sequence expression beats, tune timing, and preview the same motion data used by both renderers.')}
     ${renderLibrary('motion', definition.animations, selectedAnimation)}
@@ -707,7 +789,7 @@ const renderDraftTimeline = () => {
       <div class="draft-actions">
         <button class="timeline-button" type="button" data-action="toggle-draft-loop" aria-pressed="${draftLoop}">${draftLoop ? 'Loop' : 'Once'}</button>
         <button class="timeline-button" type="button" data-action="clear-draft" ${draftItems.length ? '' : 'disabled'}>Clear</button>
-        <button class="timeline-button primary" type="button" data-action="play-draft" ${draftItems.length ? '' : 'disabled'}>${draftPlaying ? 'Pause' : 'Play'}</button>
+        <button class="timeline-button" type="button" data-action="play-draft" ${draftItems.length ? '' : 'disabled'}>${draftPlaying ? 'Pause' : 'Play'}</button>
         <button class="timeline-button primary save" type="button" data-action="save-draft" ${draftItems.length ? '' : 'disabled'}>Save motion</button>
       </div>
     </div>
@@ -877,6 +959,115 @@ document.addEventListener('click', event => {
     }
   }
   if (action === 'save-draft') saveDraftMotion()
+  if (action === 'select-llm-style') {
+    const preset = LLM_PRESETS[trigger.dataset.key]
+    if (!preset) return
+    try {
+      const shapeDef = createDefinition({ shape: preset.shape })
+      definition.blob.shape = preset.shape
+      definition.blob.width = shapeDef.blob.width
+      definition.blob.height = shapeDef.blob.height
+    } catch {
+      definition.blob.shape = preset.shape
+    }
+    definition.blob.color = preset.color
+    definition.face.eyeColor = preset.eyeColor
+    definition.stage.color = preset.stageColor
+    definition.name = preset.name
+    commitDefinition()
+    renderPanel()
+    showToast(`${preset.label} applied`)
+  }
+  if (action === 'select-animal-style') {
+    const preset = ANIMAL_PRESETS[trigger.dataset.key]
+    if (!preset) return
+    try {
+      const shapeDef = createDefinition({ shape: preset.shape })
+      definition.blob.shape = preset.shape
+      definition.blob.width = shapeDef.blob.width
+      definition.blob.height = shapeDef.blob.height
+    } catch { definition.blob.shape = preset.shape }
+    definition.blob.color = preset.color
+    definition.face.eyeColor = preset.eyeColor
+    definition.stage.color = preset.stageColor
+    definition.face.eyeHeight = preset.eyeHeight || 50
+    definition.name = preset.name
+    commitDefinition()
+    renderPanel()
+    showToast(`${preset.label} applied`)
+  }
+  if (action === 'save-ai-settings') {
+    const groqKey = document.querySelector('#groq-key')?.value?.trim()
+    const ollamaUrl = document.querySelector('#ollama-url')?.value?.trim()
+    const ollamaModel = document.querySelector('#ollama-model')?.value?.trim()
+    const provider = document.querySelector('#ai-provider')?.value
+    if (groqKey) localStorage.setItem('groq-api-key', groqKey)
+    if (ollamaUrl) localStorage.setItem('ollama-url', ollamaUrl)
+    if (ollamaModel) localStorage.setItem('ollama-model', ollamaModel)
+    if (provider) localStorage.setItem('ai-provider', provider)
+    showToast('AI settings saved locally')
+    const status = document.querySelector('#ai-status')
+    if (status) status.textContent = 'Settings saved ✓'
+  }
+  if (action === 'test-ollama') {
+    const url = document.querySelector('#ollama-url')?.value || 'http://localhost:11434'
+    fetch(`${url.replace(/\/$/,'')}/api/tags`).then(r=>r.json()).then(d=>{
+      showToast(`Ollama OK - ${d.models?.length||0} models`)
+      const status = document.querySelector('#ai-status')
+      if (status) status.textContent = `Ollama OK: ${(d.models||[]).map(m=>m.name).join(', ')}`
+    }).catch(e=>{
+      showToast('Ollama not reachable')
+      const status = document.querySelector('#ai-status')
+      if (status) status.textContent = 'Ollama not reachable. Is `ollama serve` running?'
+    })
+  }
+  if (action === 'ai-generate') {
+    const promptInput = document.querySelector('#ai-prompt')
+    const status = document.querySelector('#ai-status')
+    const provider = document.querySelector('#ai-provider')?.value || localStorage.getItem('ai-provider') || 'groq'
+    const prompt = promptInput?.value?.trim()
+    if (!prompt) { showToast('Type a description first'); return; }
+    if (status) status.textContent = provider === 'groq' ? '⚡ Generating with Groq...' : '🦙 Generating with Ollama locally...'
+    ;(async () => {
+      try {
+        const config = {
+          groqKey: localStorage.getItem('groq-api-key') || document.querySelector('#groq-key')?.value,
+          groqModel: 'llama-3.3-70b-versatile',
+          ollamaUrl: localStorage.getItem('ollama-url') || document.querySelector('#ollama-url')?.value || 'http://localhost:11434',
+          ollamaModel: localStorage.getItem('ollama-model') || document.querySelector('#ollama-model')?.value || 'llama3.2'
+        }
+        if (provider === 'groq' && !config.groqKey) {
+          if (status) status.textContent = 'Enter Groq API key in Settings first (console.groq.com)'
+          showToast('Add Groq key in Settings')
+          return
+        }
+        const { generateMascotFromPrompt } = await import('/examples/web/ai.js')
+        const preset = await generateMascotFromPrompt(prompt, provider, config)
+        try {
+          const shapeDef = createDefinition({ shape: preset.shape })
+          definition.blob.shape = preset.shape
+          definition.blob.width = shapeDef.blob.width
+          definition.blob.height = shapeDef.blob.height
+        } catch { definition.blob.shape = preset.shape }
+        definition.blob.color = preset.color
+        definition.face.eyeColor = preset.eyeColor
+        definition.stage.color = preset.stageColor
+        definition.face.eyeShape = preset.eyeShape || 'capsule'
+        definition.name = preset.name
+        localStorage.setItem('ai-provider', provider)
+        commitDefinition()
+        renderPanel()
+        const promptEl = document.querySelector('#ai-prompt')
+        if (promptEl) promptEl.value = prompt
+        if (status) status.textContent = `Generated: ${preset.name} (${preset.shape}) - ${preset.color}`
+        showToast(`${preset.name} generated with ${provider}`)
+      } catch(e){
+        console.error(e)
+        if (status) status.textContent = 'Failed: ' + e.message
+        showToast('Generation failed: ' + e.message)
+      }
+    })()
+  }
   if (action === 'select-shape') {
     const shapeDefinition = createDefinition({ shape: trigger.dataset.key })
     definition.blob.shape = trigger.dataset.key
