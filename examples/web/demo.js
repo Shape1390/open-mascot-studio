@@ -1053,6 +1053,7 @@ document.addEventListener('click', event => {
         definition.face.eyeColor = preset.eyeColor
         definition.stage.color = preset.stageColor
         definition.face.eyeShape = preset.eyeShape || 'capsule'
+        if (preset.eyeHeight) definition.face.eyeHeight = preset.eyeHeight
         definition.name = preset.name
         localStorage.setItem('ai-provider', provider)
         commitDefinition()
